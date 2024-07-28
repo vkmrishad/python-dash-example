@@ -1,0 +1,80 @@
+/* General Styles */
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* Navbar/Header Styles */
+.navbar {
+    margin-bottom: 0;
+    padding: 15px;
+}
+
+#content .mt-4 {
+    margin-top: 0px !important;
+}
+
+/* Footer Styles */
+.footer {
+    background-color: #f8f9fa;
+    padding: 1rem 0;
+    text-align: center;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    border-top: 1px solid #e9ecef;
+}
+
+.page-content {
+    padding-bottom: 3rem;  /* Ensure there's space above the fixed footer */
+    margin-top: 10px;   /* Ensure there's space below the fixed navbar */
+}
+
+/* Sidebar Styles */
+.row>#sidebar {
+    padding-left: 0 !important;
+}
+
+.sidebar {
+    background-color: #f8f9fa;
+    padding-top: 1px;
+    min-height: 100vh;
+    height: 100%;
+    top: 56px; /* Height of navbar */
+    left: 0;
+    bottom: 0;
+    border-right: 1px solid #e9ecef;
+}
+
+.sidebar a.nav-link {
+    border-radius: 0px !important;
+}
+
+#go-to-pages a.card-link {
+    text-decoration: none !important;
+}
+
+/* Add hover effect to cards */
+# go-to-pages .hover-card {
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    text-decoration: none !important;
+}
+
+#go-to-pages .hover-card:hover {
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); /* Add shadow effect */
+}
+
+/* Media Query for Small Screens */
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+    .page-content {
+        width: 100% !important;
+    }
+}
+
