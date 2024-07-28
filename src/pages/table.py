@@ -1,21 +1,24 @@
+from datetime import datetime
+
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import dash_table, html, dcc, callback, Output, Input, State
+from dash import dash_table, html, dcc, callback, Output, Input, State, dash
 from dash.exceptions import PreventUpdate
 from dash import callback_context
 
-from db.database import load_data, save_data
+from dash.exceptions import PreventUpdate
+from sqlalchemy import func
 
-# Load the data
-df = load_data()
+from db.connection import SessionLocal
+from db.crud import load_data, save_data, Order  # Ensure your CRUD functions are adapted for SQLAlchemy
 
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+# Layout definition
 default_page_size = 25
 
-# Define the layout for the table page
 table_page_layout = dbc.Container([
-    dbc.Row([
-        dbc.Col(html.H2("Data Table")),
-    ]),
+    dbc.Row([dbc.Col(html.H2("Data Table"))]),
 
     dcc.Loading(
         id="loading",
@@ -24,8 +27,7 @@ table_page_layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     dbc.Label("Country/Region"),
-                    country_dropdown := dcc.Dropdown([x for x in sorted(df['Country/Region'].unique())], multi=False,
-                                                     style={'width': '100%'}),
+                    country_dropdown := dcc.Dropdown([], multi=False, style={'width': '100%'}),
                 ], width=4),
                 dbc.Col([
                     dbc.Label("State/Province"),
@@ -40,8 +42,7 @@ table_page_layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     dbc.Label("Category"),
-                    category_dropdown := dcc.Dropdown([x for x in sorted(df['Category'].unique())], multi=False,
-                                                      style={'width': '100%'}),
+                    category_dropdown := dcc.Dropdown([], multi=False, style={'width': '100%'}),
                 ], width=4),
                 dbc.Col([
                     dbc.Label("Sub-Category"),
@@ -61,8 +62,8 @@ table_page_layout = dbc.Container([
                 ], className='mt-2 mb-2'),
                 dbc.Col([
                     my_table := dash_table.DataTable(
-                        columns=[{"name": i, "id": i} for i in df.columns],
-                        data=df.to_dict('records'),
+                        columns=[{"name": i, "id": i} for i in Order.__table__.columns.keys()],
+                        data=[],
                         filter_action='none',
                         page_size=default_page_size,
                         style_table={'overflowX': 'auto'},
@@ -96,6 +97,7 @@ table_page_layout = dbc.Container([
 
 
 @callback(
+    Output(country_dropdown, 'options'),
     Output(state_dropdown, 'options'),
     Output(city_dropdown, 'options'),
     Output(category_dropdown, 'options'),
@@ -105,27 +107,29 @@ table_page_layout = dbc.Container([
     Input(category_dropdown, 'value')
 )
 def set_dropdown_options(selected_country, selected_state, selected_category):
-    dff = df.copy()
+    with SessionLocal() as session:
+        query = session.query(Order)
+        if selected_country:
+            query = query.filter(Order.country_region == selected_country)
+        if selected_state:
+            query = query.filter(Order.state_province == selected_state)
+        if selected_category:
+            query = query.filter(Order.category == selected_category)
 
-    state_options = []
-    city_options = []
-    sub_category_options = []
+        dff = query.all()
+        dff = pd.DataFrame([o.__dict__ for o in dff])
 
-    if selected_country:
-        dff = dff[dff['Country/Region'] == selected_country]
-        state_options = [{'label': state, 'value': state} for state in sorted(dff['State/Province'].unique())]
+        country_options = [{'label': country, 'value': country} for country in sorted(dff['country_region'].unique())]
+        state_options = [{'label': state, 'value': state} for state in
+                         sorted(dff['state_province'].unique())] if selected_country else []
+        city_options = [{'label': city, 'value': city} for city in
+                        sorted(dff['city'].unique())] if selected_state else []
 
-    if selected_state:
-        dff = dff[dff['State/Province'] == selected_state]
-        city_options = [{'label': city, 'value': city} for city in sorted(dff['City'].unique())]
-
-    if selected_category:
-        dff = dff[dff['Category'] == selected_category]
+        category_options = [{'label': cat, 'value': cat} for cat in sorted(dff['category'].unique())]
         sub_category_options = [{'label': sub_cat, 'value': sub_cat} for sub_cat in
-                                sorted(dff['Sub-Category'].unique())]
+                                sorted(dff['sub_category'].unique())] if selected_category else []
 
-    return state_options, city_options, [{'label': cat, 'value': cat} for cat in
-                                         sorted(df['Category'].unique())], sub_category_options
+        return country_options, state_options, city_options, category_options, sub_category_options
 
 
 @callback(
@@ -139,41 +143,88 @@ def set_dropdown_options(selected_country, selected_state, selected_category):
     Input(page_size, 'value'),
     prevent_initial_call=True,
 )
-def update_table_data(country_v, state_v, city_v, category_v, sub_category_v, row_v):
-    dff = df.copy()
+def update_table_data(country_v, state_v, city_v, category_v, sub_category_v, page_size):
+    with SessionLocal() as session:
+        query = session.query(Order)
+        if country_v:
+            query = query.filter(Order.country_region == country_v)
+        if state_v:
+            query = query.filter(Order.state_province == state_v)
+        if city_v:
+            query = query.filter(Order.city == city_v)
+        if category_v:
+            query = query.filter(Order.category == category_v)
+        if sub_category_v:
+            query = query.filter(Order.sub_category == sub_category_v)
 
-    if country_v:
-        dff = dff[dff['Country/Region'] == country_v]
+        dff = query.all()
 
-    if state_v:
-        dff = dff[dff['State/Province'] == state_v]
+        aa = [
+            {
+                'id': r.id,
+                'order_id': r.order_id,
+                'order_date': r.order_date,
+                'dispatch_date': r.dispatch_date,
+                'delivery_mode': r.delivery_mode,
+                'customer_id': r.customer_id,
+                'customer_name': r.customer_name,
+                'segment': r.segment,
+                'city': r.city,
+                'state_province': r.state_province,
+                'country_region': r.country_region,
+                'region': r.region,
+                'product_id': r.product_id,
+                'category': r.category,
+                'sub_category': r.sub_category,
+                'product_name': r.product_name,
+                'sales': r.sales,
+                'quantity': r.quantity,
+                'discount': r.discount,
+                'profit': r.profit
+            }
+            for r in dff
+        ]
 
-    if city_v:
-        dff = dff[dff['City'] == city_v]
+        # print(aa)
 
-    if category_v:
-        dff = dff[dff['Category'] == category_v]
+        # dff = pd.DataFrame(aa
 
-    if sub_category_v:
-        dff = dff[dff['Sub-Category'] == sub_category_v]
 
-    return dff.to_dict('records'), row_v
+
+
+        # aa = [list(row.__dict__.values()) for row in dff]
+
+        # # Pagination
+        # start_index = 0
+        # end_index = page_size
+        # paginated_data = dff[start_index:end_index]
+
+        return aa, page_size
+
+        # # Pagination
+        # start_index = 0
+        # end_index = page_size
+        # paginated_data = dff[start_index:end_index]
+
+        # print(paginated_data)
+
+        # return [], page_size
 
 
 @callback(
     Output('row-id-input', 'value'),
     Output(my_table, 'data'),
-    Input('page-content', 'children'),  # Assuming 'page-content' is the container for the page layout
+    Input('page-content', 'children'),
     Input('add-button', 'n_clicks'),
-    State(my_table, 'data'),
     State('order-date-input', 'value'),
     State('city-input', 'value'),
     State('state-province-input', 'value'),
     State('country-region-input', 'value'),
     State('category-input', 'value'),
-    State('sub-category-input', 'value')
+    State('sub-category-input', 'value'),
+    prevent_initial_call=True,
 )
-def update_table_and_row_id(page_content, n_clicks, table_data, order_date, city, state_province, country_region, category, sub_category):
+def update_table_and_row_id(page_content, n_clicks, order_date, city, state_province, country_region, category, sub_category):
     ctx = callback_context
 
     # Determine which input triggered the callback
@@ -182,38 +233,95 @@ def update_table_and_row_id(page_content, n_clicks, table_data, order_date, city
     else:
         trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
-    # Load the data
-    df = load_data()
+    with SessionLocal() as session:
+        max_id = session.query(func.max(Order.id)).scalar() or 0
+        new_id = max_id + 1
 
-    # Generate the new Row ID
-    new_row_id = df['Row ID'].max() + 1
+        dff = session.query(Order).order_by(Order.id.desc()).all()
+        aa = [
+            {
+                'id': r.id,
+                'order_id': r.order_id,
+                'order_date': r.order_date,
+                'dispatch_date': r.dispatch_date,
+                'delivery_mode': r.delivery_mode,
+                'customer_id': r.customer_id,
+                'customer_name': r.customer_name,
+                'segment': r.segment,
+                'city': r.city,
+                'state_province': r.state_province,
+                'country_region': r.country_region,
+                'region': r.region,
+                'product_id': r.product_id,
+                'category': r.category,
+                'sub_category': r.sub_category,
+                'product_name': r.product_name,
+                'sales': r.sales,
+                'quantity': r.quantity,
+                'discount': r.discount,
+                'profit': r.profit
+            }
+            for r in dff
+        ]
 
     if trigger_id == 'page-content':
         # Only update the Row ID input field when the page is loaded
-        return new_row_id, table_data
+        return new_id, aa
 
     elif trigger_id == 'add-button' and n_clicks > 0:
-        # Check for duplicates
-        if df[(df['Order Date'] == order_date) & (df['City'] == city) & (df['State/Province'] == state_province) &
-              (df['Country/Region'] == country_region) & (df['Category'] == category) & (df['Sub-Category'] == sub_category)].empty:
-            # Create the new row
-            new_row = {
-                'Row ID': new_row_id,
-                'Order Date': order_date,
-                'City': city,
-                'State/Province': state_province,
-                'Country/Region': country_region,
-                'Category': category,
-                'Sub-Category': sub_category
-            }
+        with SessionLocal() as session:
+            # Check for duplicates
+            existing = session.query(Order).filter(
+                Order.order_date == order_date,
+                Order.city == city,
+                Order.state_province == state_province,
+                Order.country_region == country_region,
+                Order.category == category,
+                Order.sub_category == sub_category
+            ).first()
 
-            # Append the new row to the DataFrame
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+            if not existing:
+                new_row = Order(
+                    id=new_id,
+                    order_date=datetime.strptime(order_date, '%Y-%m-%d').date() if order_date else None,
+                    city=city,
+                    state_province=state_province,
+                    country_region=country_region,
+                    category=category,
+                    sub_category=sub_category,
+                )
 
-            # Save the updated DataFrame to the Excel file
-            save_data(df)
+                session.add(new_row)
+                session.commit()
 
-            # Return updated data and new Row ID
-            return new_row_id + 1, df.to_dict('records')
+                # Refresh the data
+                dff = session.query(Order).order_by(Order.id.desc()).all()
+                aa = [
+                    {
+                        'id': r.id,
+                        'order_id': r.order_id,
+                        'order_date': r.order_date,
+                        'dispatch_date': r.dispatch_date,
+                        'delivery_mode': r.delivery_mode,
+                        'customer_id': r.customer_id,
+                        'customer_name': r.customer_name,
+                        'segment': r.segment,
+                        'city': r.city,
+                        'state_province': r.state_province,
+                        'country_region': r.country_region,
+                        'region': r.region,
+                        'product_id': r.product_id,
+                        'category': r.category,
+                        'sub_category': r.sub_category,
+                        'product_name': r.product_name,
+                        'sales': r.sales,
+                        'quantity': r.quantity,
+                        'discount': r.discount,
+                        'profit': r.profit
+                    }
+                    for r in dff
+                ]
+
+                return new_id + 1, aa
 
     raise PreventUpdate

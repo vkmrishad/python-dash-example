@@ -1,6 +1,8 @@
 import dash_bootstrap_components as dbc
 from dash import html, Output, Input, callback, dcc
-from db.database import load_data, get_overview_metrics
+
+from db.connection import SessionLocal
+from db.crud import load_data, get_overview_metrics
 
 # Define the layout for the landing page
 landing_page_layout = dbc.Container([
@@ -85,8 +87,8 @@ landing_page_layout = dbc.Container([
 )
 def update_metrics(pathname):
     # Load the data each time the page is loaded
-    df = load_data()
-    metrics = get_overview_metrics(df)
+    with SessionLocal() as session:
+        metrics = get_overview_metrics(session)
 
     total_orders = metrics.get('total_orders', 0)
     total_sales = metrics.get('total_sales', 0)
