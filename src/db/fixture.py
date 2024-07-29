@@ -3,9 +3,9 @@ import os
 import pandas as pd
 from loguru import logger
 
-from database import Order
-from connection import SessionLocal
-from model import OrderData
+from src.db.connection import SessionLocal
+from src.db.model import Order
+from src.db.schema import OrderData
 
 
 def load_data_to_db(file_path: str):

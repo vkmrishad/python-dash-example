@@ -2,20 +2,18 @@ from datetime import datetime
 
 import dash_bootstrap_components as dbc
 import pandas as pd
-from dash import dash_table, html, dcc, callback, Output, Input, State, dash
-from dash.exceptions import PreventUpdate
+from dash import dash_table, html, dcc, callback, Output, Input, State
 from dash import callback_context
-
 from dash.exceptions import PreventUpdate
+
 from sqlalchemy import func
 
-from db.connection import SessionLocal
-from db.crud import load_data, save_data, Order  # Ensure your CRUD functions are adapted for SQLAlchemy
+from src.db.connection import SessionLocal
+from src.db.crud import order_to_dict
+from src.db.model import Order
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
-# Layout definition
 default_page_size = 25
+
 
 table_page_layout = dbc.Container([
     dbc.Row([dbc.Col(html.H2("Data Table"))]),
@@ -72,22 +70,52 @@ table_page_layout = dbc.Container([
             ]),
 
             # Add these input fields and the "Add" button at the bottom of your layout
+            dbc.Row([dbc.Col(html.H4("Add Record"))]),
+            # Alerts for success and error messages
             dbc.Row([
-                dbc.Col(dbc.Input(id='row-id-input', placeholder='Row ID', type='text', disabled=True), width=2),
-                dbc.Col(dbc.Input(id='order-date-input', placeholder='Order Date', required='true', type='date'),
+                dbc.Alert("Record added successfully!", id="success-alert", color="success", is_open=False, dismissable=True, duration=10000),
+                dbc.Alert("""An error occurred while adding the record. 
+                * All fields are required. 
+                * Order ID should be unique
+            """, id="error-alert", color="danger", is_open=False, dismissable=True, duration=10000),
+            ], className='mt-2 mb-2'),
+            dbc.Row([
+                dbc.Col(dbc.Input(id='id-input', placeholder='ID', type='text', disabled=True), width=2),
+                dbc.Col(dbc.Input(id='order-id-input', placeholder='Order ID', required=True, type='text'), width=2),
+                dbc.Col(dbc.Input(id='order-date-input', placeholder='Order Date', required=True, type='date'),
                         width=2),
-                dbc.Col(dbc.Input(id='city-input', placeholder='City', required='true', type='text'), width=2),
-                dbc.Col(
-                    dbc.Input(id='state-province-input', placeholder='State/Province', required='true', type='text'),
-                    width=2),
-                dbc.Col(
-                    dbc.Input(id='country-region-input', placeholder='Country/Region', required='true', type='text'),
-                    width=2),
-                dbc.Col(dbc.Input(id='category-input', placeholder='Category', required='true', type='text'), width=2),
-                dbc.Col(dbc.Input(id='sub-category-input', placeholder='Sub-Category', required='true', type='text'),
+                dbc.Col(dbc.Input(id='dispatch-date-input', placeholder='Dispatch Date', required=True, type='date'),
+                        width=2),
+                dbc.Col(dbc.Input(id='delivery-mode-input', placeholder='Delivery Mode', required=True, type='text'),
+                        width=2),
+                dbc.Col(dbc.Input(id='customer-id-input', placeholder='Customer ID', required=True, type='text'),
                         width=2),
             ], className='mt-2 mb-2'),
             dbc.Row([
+                dbc.Col(dbc.Input(id='customer-name-input', placeholder='Customer Name', required=True, type='text'),
+                        width=2),
+                dbc.Col(dbc.Input(id='segment-input', placeholder='Segment', required=True, type='text'), width=2),
+                dbc.Col(dbc.Input(id='city-input', placeholder='City', required=True, type='text'), width=2),
+                dbc.Col(dbc.Input(id='state-province-input', placeholder='State/Province', required=True, type='text'),
+                        width=2),
+                dbc.Col(dbc.Input(id='country-region-input', placeholder='Country/Region', required=True, type='text'),
+                        width=2),
+                dbc.Col(dbc.Input(id='region-input', placeholder='Region', required=True, type='text'), width=2),
+            ], className='mt-2 mb-2'),
+            dbc.Row([
+                dbc.Col(dbc.Input(id='product-id-input', placeholder='Product ID', required=True, type='text'),
+                        width=2),
+                dbc.Col(dbc.Input(id='category-input', placeholder='Category', required=True, type='text'), width=2),
+                dbc.Col(dbc.Input(id='sub-category-input', placeholder='Sub-Category', required=True, type='text'),
+                        width=2),
+                dbc.Col(dbc.Input(id='product-name-input', placeholder='Product Name', required=True, type='text'),
+                        width=2),
+                dbc.Col(dbc.Input(id='sales-input', placeholder='Sales', required=True, type='number'), width=2),
+                dbc.Col(dbc.Input(id='quantity-input', placeholder='Quantity', required=True, type='number'), width=2),
+            ], className='mt-2 mb-2'),
+            dbc.Row([
+                dbc.Col(dbc.Input(id='discount-input', placeholder='Discount', required=True, type='number'), width=2),
+                dbc.Col(dbc.Input(id='profit-input', placeholder='Profit', required=True, type='number'), width=2),
                 dbc.Col(dbc.Button("Add", id='add-button', n_clicks=0), width=2),
             ], className='mt-2 mb-2'),
         ]
@@ -116,18 +144,18 @@ def set_dropdown_options(selected_country, selected_state, selected_category):
         if selected_category:
             query = query.filter(Order.category == selected_category)
 
-        dff = query.all()
-        dff = pd.DataFrame([o.__dict__ for o in dff])
+        orders = query.all()
+        df = pd.DataFrame([o.__dict__ for o in orders])
 
-        country_options = [{'label': country, 'value': country} for country in sorted(dff['country_region'].unique())]
+        country_options = [{'label': country, 'value': country} for country in sorted(df['country_region'].unique())]
         state_options = [{'label': state, 'value': state} for state in
-                         sorted(dff['state_province'].unique())] if selected_country else []
+                         sorted(df['state_province'].unique())] if selected_country else []
         city_options = [{'label': city, 'value': city} for city in
-                        sorted(dff['city'].unique())] if selected_state else []
+                        sorted(df['city'].unique())] if selected_state else []
 
-        category_options = [{'label': cat, 'value': cat} for cat in sorted(dff['category'].unique())]
+        category_options = [{'label': cat, 'value': cat} for cat in sorted(df['category'].unique())]
         sub_category_options = [{'label': sub_cat, 'value': sub_cat} for sub_cat in
-                                sorted(dff['sub_category'].unique())] if selected_category else []
+                                sorted(df['sub_category'].unique())] if selected_category else []
 
         return country_options, state_options, city_options, category_options, sub_category_options
 
@@ -157,75 +185,49 @@ def update_table_data(country_v, state_v, city_v, category_v, sub_category_v, pa
         if sub_category_v:
             query = query.filter(Order.sub_category == sub_category_v)
 
-        dff = query.all()
+        orders = query.all()
+        results = order_to_dict(orders)
 
-        aa = [
-            {
-                'id': r.id,
-                'order_id': r.order_id,
-                'order_date': r.order_date,
-                'dispatch_date': r.dispatch_date,
-                'delivery_mode': r.delivery_mode,
-                'customer_id': r.customer_id,
-                'customer_name': r.customer_name,
-                'segment': r.segment,
-                'city': r.city,
-                'state_province': r.state_province,
-                'country_region': r.country_region,
-                'region': r.region,
-                'product_id': r.product_id,
-                'category': r.category,
-                'sub_category': r.sub_category,
-                'product_name': r.product_name,
-                'sales': r.sales,
-                'quantity': r.quantity,
-                'discount': r.discount,
-                'profit': r.profit
-            }
-            for r in dff
-        ]
-
-        # print(aa)
-
-        # dff = pd.DataFrame(aa
-
-
-
-
-        # aa = [list(row.__dict__.values()) for row in dff]
-
-        # # Pagination
-        # start_index = 0
-        # end_index = page_size
-        # paginated_data = dff[start_index:end_index]
-
-        return aa, page_size
-
-        # # Pagination
-        # start_index = 0
-        # end_index = page_size
-        # paginated_data = dff[start_index:end_index]
-
-        # print(paginated_data)
-
-        # return [], page_size
+        return results, page_size
 
 
 @callback(
-    Output('row-id-input', 'value'),
+    Output('id-input', 'value'),
     Output(my_table, 'data'),
+    Output('success-alert', 'is_open'),
+    Output('error-alert', 'is_open'),
+    [Output(f'{field.replace("_", "-")}-input', 'value') for field in Order.__table__.columns.keys() if field != 'id'],
     Input('page-content', 'children'),
     Input('add-button', 'n_clicks'),
+    State('order-id-input', 'value'),
     State('order-date-input', 'value'),
+    State('dispatch-date-input', 'value'),
+    State('delivery-mode-input', 'value'),
+    State('customer-id-input', 'value'),
+    State('customer-name-input', 'value'),
+    State('segment-input', 'value'),
     State('city-input', 'value'),
     State('state-province-input', 'value'),
     State('country-region-input', 'value'),
+    State('region-input', 'value'),
+    State('product-id-input', 'value'),
     State('category-input', 'value'),
     State('sub-category-input', 'value'),
+    State('product-name-input', 'value'),
+    State('sales-input', 'value'),
+    State('quantity-input', 'value'),
+    State('discount-input', 'value'),
+    State('profit-input', 'value'),
     prevent_initial_call=True,
 )
-def update_table_and_row_id(page_content, n_clicks, order_date, city, state_province, country_region, category, sub_category):
+def update_table_and_row_id(page_content, n_clicks, order_id, order_date, dispatch_date, delivery_mode,
+    customer_id, customer_name, segment, city, state_province, country_region, region, product_id, category,
+sub_category, product_name, sales, quantity, discount, profit):
     ctx = callback_context
+    clear_inputs = [''] * (len(Order.__table__.columns.keys()) - 1)
+    values = [order_id, order_date, dispatch_date, delivery_mode, customer_id, customer_name, segment,
+              city, state_province, country_region, region, product_id, category, sub_category, product_name,
+              sales, quantity, discount, profit]
 
     # Determine which input triggered the callback
     if not ctx.triggered:
@@ -237,91 +239,57 @@ def update_table_and_row_id(page_content, n_clicks, order_date, city, state_prov
         max_id = session.query(func.max(Order.id)).scalar() or 0
         new_id = max_id + 1
 
-        dff = session.query(Order).order_by(Order.id.desc()).all()
-        aa = [
-            {
-                'id': r.id,
-                'order_id': r.order_id,
-                'order_date': r.order_date,
-                'dispatch_date': r.dispatch_date,
-                'delivery_mode': r.delivery_mode,
-                'customer_id': r.customer_id,
-                'customer_name': r.customer_name,
-                'segment': r.segment,
-                'city': r.city,
-                'state_province': r.state_province,
-                'country_region': r.country_region,
-                'region': r.region,
-                'product_id': r.product_id,
-                'category': r.category,
-                'sub_category': r.sub_category,
-                'product_name': r.product_name,
-                'sales': r.sales,
-                'quantity': r.quantity,
-                'discount': r.discount,
-                'profit': r.profit
-            }
-            for r in dff
-        ]
+        orders = session.query(Order).order_by(Order.id.desc()).all()
+        results = order_to_dict(orders)
 
     if trigger_id == 'page-content':
         # Only update the Row ID input field when the page is loaded
-        return new_id, aa
+        return [new_id, results, False, False] + clear_inputs
 
     elif trigger_id == 'add-button' and n_clicks > 0:
         with SessionLocal() as session:
-            # Check for duplicates
+            # Check for duplicates order_id
             existing = session.query(Order).filter(
-                Order.order_date == order_date,
-                Order.city == city,
-                Order.state_province == state_province,
-                Order.country_region == country_region,
-                Order.category == category,
-                Order.sub_category == sub_category
+                Order.order_id == order_id
             ).first()
+
+            if not all(values):
+                return [new_id, results, False, True] + values
 
             if not existing:
                 new_row = Order(
                     id=new_id,
+                    order_id=order_id,
                     order_date=datetime.strptime(order_date, '%Y-%m-%d').date() if order_date else None,
+                    dispatch_date=datetime.strptime(dispatch_date, '%Y-%m-%d').date() if dispatch_date else None,
+                    delivery_mode=delivery_mode,
+                    customer_id=customer_id,
+                    customer_name=customer_name,
+                    segment=segment,
                     city=city,
                     state_province=state_province,
                     country_region=country_region,
+                    region=region,
+                    product_id=product_id,
                     category=category,
                     sub_category=sub_category,
+                    product_name=product_name,
+                    sales=sales,
+                    quantity=quantity,
+                    discount=discount,
+                    profit=profit
                 )
 
                 session.add(new_row)
                 session.commit()
 
                 # Refresh the data
-                dff = session.query(Order).order_by(Order.id.desc()).all()
-                aa = [
-                    {
-                        'id': r.id,
-                        'order_id': r.order_id,
-                        'order_date': r.order_date,
-                        'dispatch_date': r.dispatch_date,
-                        'delivery_mode': r.delivery_mode,
-                        'customer_id': r.customer_id,
-                        'customer_name': r.customer_name,
-                        'segment': r.segment,
-                        'city': r.city,
-                        'state_province': r.state_province,
-                        'country_region': r.country_region,
-                        'region': r.region,
-                        'product_id': r.product_id,
-                        'category': r.category,
-                        'sub_category': r.sub_category,
-                        'product_name': r.product_name,
-                        'sales': r.sales,
-                        'quantity': r.quantity,
-                        'discount': r.discount,
-                        'profit': r.profit
-                    }
-                    for r in dff
-                ]
+                orders = session.query(Order).order_by(Order.id.desc()).all()
+                results = order_to_dict(orders)
 
-                return new_id + 1, aa
+                return [new_id + 1, results, True, False] + clear_inputs
+
+            else:
+                return [new_id, results, False, True] + values
 
     raise PreventUpdate

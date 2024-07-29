@@ -5,7 +5,7 @@ from src.pages.table import table_page_layout
 from src.pages.graph import graph_page_layout, register_callbacks
 
 # Initialize the Dash app with Bootstrap theme and suppress callback exceptions
-app = Dash(__name__, external_stylesheets=[dbc.themes.ZEPHYR, 'assets/css/style.css'], suppress_callback_exceptions=True)
+app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY, 'assets/css/style.css'], suppress_callback_exceptions=True)
 app.title = "Superstore Dashboard"
 
 

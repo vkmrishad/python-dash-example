@@ -1,6 +1,6 @@
 import dash_bootstrap_components as dbc
 from dash import html, dcc, Input, Output
-from db.crud import load_data
+from src.db.crud import load_data
 import plotly.express as px
 
 # Load the data

@@ -1,11 +1,13 @@
 import os
+from typing import List
 
 import pandas as pd
 from pandas import DataFrame
 
 from sqlalchemy.orm import Session
-from sqlalchemy import Column, Integer, String, Float, Date, func
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import func
+
+from src.db.model import Order
 
 path = os.path.dirname(os.path.abspath(__file__))
 data_file_path = os.path.join(path, 'data', '(GB) Sample - EU Superstore.xls')
@@ -36,34 +38,6 @@ def save_data(df: DataFrame, file_path: str = data_file_path):
     df.to_excel(file_path, sheet_name=xls.sheet_names[0], index=False, engine='openpyxl')
 
     print(f'Data saved to {file_path}')
-
-
-Base = declarative_base()
-
-
-class Order(Base):
-    __tablename__ = 'orders'
-
-    id = Column(Integer, primary_key=True)
-    order_id = Column(String, nullable=True)
-    order_date = Column(Date, nullable=True)
-    dispatch_date = Column(Date, nullable=True)
-    delivery_mode = Column(String, nullable=True)
-    customer_id = Column(String, nullable=True)
-    customer_name = Column(String, nullable=True)
-    segment = Column(String, nullable=True)
-    city = Column(String, nullable=True)
-    state_province = Column(String, nullable=True)
-    country_region = Column(String, nullable=True)
-    region = Column(String, nullable=True)
-    product_id = Column(String, nullable=True)
-    category = Column(String, nullable=True)
-    sub_category = Column(String, nullable=True)
-    product_name = Column(String, nullable=True)
-    sales = Column(Float, nullable=True)
-    quantity = Column(Integer, nullable=True)
-    discount = Column(Float, nullable=True)
-    profit = Column(Float, nullable=True)
 
 
 def get_overview_metrics(session: Session) -> dict:
@@ -100,14 +74,29 @@ def get_overview_metrics(session: Session) -> dict:
     return data
 
 
-def get_orders(session: Session, limit: int = 10, offset: int = 0) -> list:
-    """
-    Get a list of orders from the database
-    :param session: SQLAlchemy session object
-    :param limit: Number of records to return
-    :param offset: Number of records to skip
-    :return: List of orders
-    """
-    orders = session.query(Order).limit(limit).offset(offset).all().order_by(Order.id.desc())
-
-    return orders
+def order_to_dict(orders: List[Order]) -> List[dict]:
+    return [
+        {
+            'id': order.id,
+            'order_id': order.order_id,
+            'order_date': order.order_date,
+            'dispatch_date': order.dispatch_date,
+            'delivery_mode': order.delivery_mode,
+            'customer_id': order.customer_id,
+            'customer_name': order.customer_name,
+            'segment': order.segment,
+            'city': order.city,
+            'state_province': order.state_province,
+            'country_region': order.country_region,
+            'region': order.region,
+            'product_id': order.product_id,
+            'category': order.category,
+            'sub_category': order.sub_category,
+            'product_name': order.product_name,
+            'sales': order.sales,
+            'quantity': order.quantity,
+            'discount': order.discount,
+            'profit': order.profit
+        }
+        for order in orders
+    ]

@@ -1,8 +1,8 @@
 import dash_bootstrap_components as dbc
 from dash import html, Output, Input, callback, dcc
 
-from db.connection import SessionLocal
-from db.crud import load_data, get_overview_metrics
+from src.db.connection import SessionLocal
+from src.db.crud import get_overview_metrics
 
 # Define the layout for the landing page
 landing_page_layout = dbc.Container([
