@@ -16,6 +16,7 @@ default_page_size = 25
 table_page_layout = dbc.Container(
     [
         dbc.Row([dbc.Col(html.H2("Data Table"))]),
+        html.Br(),
         dcc.Loading(
             id="loading",
             type="default",

@@ -18,6 +18,7 @@ landing_page_layout = dbc.Container(
                 ),
             ]
         ),
+        html.Br(),
         dcc.Loading(
             id="loading",
             type="default",
@@ -116,7 +117,7 @@ landing_page_layout = dbc.Container(
                                             ),
                                         ]
                                     ),
-                                    color="warning",
+                                    color="#3E442B",
                                     inverse=True,
                                     className="mb-3 text-white hover-card",
                                 ),
@@ -136,7 +137,7 @@ landing_page_layout = dbc.Container(
                                             ),
                                         ]
                                     ),
-                                    color="danger",
+                                    color="#3626A7",
                                     inverse=True,
                                     className="mb-3 text-white hover-card",
                                 ),

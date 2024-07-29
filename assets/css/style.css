@@ -52,6 +52,7 @@ body {
 
 .sidebar a.nav-link {
     border-radius: 0px !important;
+    padding-left: 1.5rem;
 }
 
 #go-to-pages a.card-link {
@@ -77,4 +78,3 @@ body {
         width: 100% !important;
     }
 }
-

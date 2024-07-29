@@ -15,6 +15,7 @@ graph_page_layout = dbc.Container(
                 dbc.Col(html.H2("Graphs")),
             ]
         ),
+        html.Br(),
         dbc.Row(
             [
                 dbc.Col(dcc.Graph(id="timeline-graph"), width=8),

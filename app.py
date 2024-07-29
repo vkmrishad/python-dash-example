@@ -8,7 +8,11 @@ from src.pages.table import table_page_layout
 # Initialize the Dash app with Bootstrap theme and suppress callback exceptions
 app = Dash(
     __name__,
-    external_stylesheets=[dbc.themes.FLATLY, "assets/css/style.css"],
+    external_stylesheets=[
+        dbc.themes.COSMO,
+        dbc.icons.FONT_AWESOME,
+        "assets/css/style.css",
+    ],
     suppress_callback_exceptions=True,
 )
 app.title = "Superstore Dashboard"
@@ -74,13 +78,37 @@ app.layout = html.Div(
                                 dbc.Nav(
                                     [
                                         dbc.NavLink(
-                                            "Landing", href="/landing", active="exact"
+                                            [
+                                                html.I(
+                                                    className="fas fa-home",
+                                                    style={"margin-right": "10px"},
+                                                ),
+                                                "Landing",
+                                            ],
+                                            href="/landing",
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            "Table", href="/table", active="exact"
+                                            [
+                                                html.I(
+                                                    className="fas fa-table",
+                                                    style={"margin-right": "10px"},
+                                                ),
+                                                "Table",
+                                            ],
+                                            href="/table",
+                                            active="exact",
                                         ),
                                         dbc.NavLink(
-                                            "Graph", href="/graph", active="exact"
+                                            [
+                                                html.I(
+                                                    className="fas fa-chart-line",
+                                                    style={"margin-right": "10px"},
+                                                ),
+                                                "Graph",
+                                            ],
+                                            href="/graph",
+                                            active="exact",
                                         ),
                                     ],
                                     vertical=True,
