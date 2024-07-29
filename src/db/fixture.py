@@ -13,9 +13,9 @@ def load_data_to_db(file_path: str):
     xls = pd.ExcelFile(file_path)
     df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])
 
-    df['Order Date'] = pd.to_datetime(df['Order Date'])
-    df['Dispatch Date'] = pd.to_datetime(df['Dispatch Date'])
-    df = df.sort_values(by='Row ID', ascending=True)
+    df["Order Date"] = pd.to_datetime(df["Order Date"])
+    df["Dispatch Date"] = pd.to_datetime(df["Dispatch Date"])
+    df = df.sort_values(by="Row ID", ascending=True)
 
     # Start logging
     logger.info("Starting data load to database...")
@@ -26,26 +26,26 @@ def load_data_to_db(file_path: str):
         logger.info(f"Processing row: {row['Row ID']}")
         try:
             order = OrderData(
-                id=int(row['Row ID']),
-                order_id=str(row['Order ID']),
-                order_date=pd.to_datetime(row['Order Date']).date(),
-                dispatch_date=pd.to_datetime(row['Dispatch Date']).date(),
-                delivery_mode=str(row['Delivery Mode']),
-                customer_id=str(row['Customer ID']),
-                customer_name=str(row['Customer Name']),
-                segment=str(row['Segment']),
-                city=str(row['City']),
-                state_province=str(row['State/Province']),
-                country_region=str(row['Country/Region']),
-                region=str(row['Region']),
-                product_id=str(row['Product ID']),
-                category=str(row['Category']),
-                sub_category=str(row['Sub-Category']),
-                product_name=str(row['Product Name']),
-                sales=float(row['Sales']),
-                quantity=int(row['Quantity']),
-                discount=float(row['Discount']),
-                profit=float(row['Profit'])
+                id=int(row["Row ID"]),
+                order_id=str(row["Order ID"]),
+                order_date=pd.to_datetime(row["Order Date"]).date(),
+                dispatch_date=pd.to_datetime(row["Dispatch Date"]).date(),
+                delivery_mode=str(row["Delivery Mode"]),
+                customer_id=str(row["Customer ID"]),
+                customer_name=str(row["Customer Name"]),
+                segment=str(row["Segment"]),
+                city=str(row["City"]),
+                state_province=str(row["State/Province"]),
+                country_region=str(row["Country/Region"]),
+                region=str(row["Region"]),
+                product_id=str(row["Product ID"]),
+                category=str(row["Category"]),
+                sub_category=str(row["Sub-Category"]),
+                product_name=str(row["Product Name"]),
+                sales=float(row["Sales"]),
+                quantity=int(row["Quantity"]),
+                discount=float(row["Discount"]),
+                profit=float(row["Profit"]),
             )
             valid_data.append(order.dict())
         except Exception as e:
@@ -71,7 +71,7 @@ def load_data_to_db(file_path: str):
     logger.info("Data load to database complete.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     path = os.path.dirname(os.path.abspath(__file__))
-    data_file_path = os.path.join(path, 'data', '(GB) Sample - EU Superstore.xls')
+    data_file_path = os.path.join(path, "data", "(GB) Sample - EU Superstore.xls")
     load_data_to_db(data_file_path)

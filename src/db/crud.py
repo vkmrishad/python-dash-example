@@ -3,14 +3,13 @@ from typing import List
 
 import pandas as pd
 from pandas import DataFrame
-
-from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.orm import Session
 
 from src.db.model import Order
 
 path = os.path.dirname(os.path.abspath(__file__))
-data_file_path = os.path.join(path, 'data', '(GB) Sample - EU Superstore.xls')
+data_file_path = os.path.join(path, "data", "(GB) Sample - EU Superstore.xls")
 
 
 def load_data(file_path: str = data_file_path) -> DataFrame:
@@ -21,9 +20,9 @@ def load_data(file_path: str = data_file_path) -> DataFrame:
     """
     xls = pd.ExcelFile(file_path)
     df = pd.read_excel(xls, sheet_name=xls.sheet_names[0])
-    df['Order Date'] = pd.to_datetime(df['Order Date'])
-    df['Dispatch Date'] = pd.to_datetime(df['Dispatch Date'])
-    df = df.sort_values(by='Row ID', ascending=False)
+    df["Order Date"] = pd.to_datetime(df["Order Date"])
+    df["Dispatch Date"] = pd.to_datetime(df["Dispatch Date"])
+    df = df.sort_values(by="Row ID", ascending=False)
 
     return df
 
@@ -35,9 +34,11 @@ def save_data(df: DataFrame, file_path: str = data_file_path):
     :param file_path: Path to the Excel file
     """
     xls = pd.ExcelFile(file_path)
-    df.to_excel(file_path, sheet_name=xls.sheet_names[0], index=False, engine='openpyxl')
+    df.to_excel(
+        file_path, sheet_name=xls.sheet_names[0], index=False, engine="openpyxl"
+    )
 
-    print(f'Data saved to {file_path}')
+    print(f"Data saved to {file_path}")
 
 
 def get_overview_metrics(session: Session) -> dict:
@@ -77,26 +78,26 @@ def get_overview_metrics(session: Session) -> dict:
 def order_to_dict(orders: List[Order]) -> List[dict]:
     return [
         {
-            'id': order.id,
-            'order_id': order.order_id,
-            'order_date': order.order_date,
-            'dispatch_date': order.dispatch_date,
-            'delivery_mode': order.delivery_mode,
-            'customer_id': order.customer_id,
-            'customer_name': order.customer_name,
-            'segment': order.segment,
-            'city': order.city,
-            'state_province': order.state_province,
-            'country_region': order.country_region,
-            'region': order.region,
-            'product_id': order.product_id,
-            'category': order.category,
-            'sub_category': order.sub_category,
-            'product_name': order.product_name,
-            'sales': order.sales,
-            'quantity': order.quantity,
-            'discount': order.discount,
-            'profit': order.profit
+            "id": order.id,
+            "order_id": order.order_id,
+            "order_date": order.order_date,
+            "dispatch_date": order.dispatch_date,
+            "delivery_mode": order.delivery_mode,
+            "customer_id": order.customer_id,
+            "customer_name": order.customer_name,
+            "segment": order.segment,
+            "city": order.city,
+            "state_province": order.state_province,
+            "country_region": order.country_region,
+            "region": order.region,
+            "product_id": order.product_id,
+            "category": order.category,
+            "sub_category": order.sub_category,
+            "product_name": order.product_name,
+            "sales": order.sales,
+            "quantity": order.quantity,
+            "discount": order.discount,
+            "profit": order.profit,
         }
         for order in orders
     ]

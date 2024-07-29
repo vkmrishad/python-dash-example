@@ -1,12 +1,11 @@
-from sqlalchemy import Column, Integer, String, Float, Date
+from sqlalchemy import Column, Date, Float, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
-
 
 Base = declarative_base()
 
 
 class Order(Base):
-    __tablename__ = 'orders'
+    __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True)
     order_id = Column(String, nullable=True)
