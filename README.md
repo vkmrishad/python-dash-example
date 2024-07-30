@@ -1,10 +1,7 @@
 # python-dash-example
 Python Dash With Bootstrap
 
-## Screenshots
 ![Landing Page](screenshots/1.png?raw=true "Landing Page")
-![Data Table](screenshots/2.png?raw=true "Data Table")
-![Graph](screenshots/3.png?raw=true "Graph")
 
 ## Clone
 
@@ -45,3 +42,7 @@ Install Packages from Poetry
 
 ## Sample Excel xls file available in the directory
     $ cd src/db/data/(GB) Sample - EU Superstore.xls
+
+## Screenshots
+![Data Table](screenshots/2.png?raw=true "Data Table")
+![Graph](screenshots/3.png?raw=true "Graph")
