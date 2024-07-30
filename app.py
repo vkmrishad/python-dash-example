@@ -1,7 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import Dash, Input, Output, State, dcc, html
 
-from src.pages.graph import graph_page_layout, register_callbacks
+from src.pages.graph import graph_page_layout
 from src.pages.landing import landing_page_layout
 from src.pages.table import table_page_layout
 
@@ -174,9 +174,6 @@ def toggle_navbar_collapse(n, is_open):
         return not is_open
     return is_open
 
-
-# Register the callbacks for the graph page
-register_callbacks(app)
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8000)
