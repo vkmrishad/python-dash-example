@@ -1,6 +1,11 @@
 # python-dash-example
 Python Dash With Bootstrap
 
+## Screenshots
+![Landing Page](screenshots/1.png?raw=true "Landing Page")
+![Data Table](screenshots/2.png?raw=true "Data Table")
+![Graph](screenshots/3.png?raw=true "Graph")
+
 ## Clone
 
     git clone https://github.com/vkmrishad/python-dash-example.git
