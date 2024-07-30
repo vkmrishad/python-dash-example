@@ -117,6 +117,7 @@ table_page_layout = dbc.Container(
                     ]
                 ),
                 # Add these input fields and the "Add" button at the bottom of your layout
+                html.Br(),
                 dbc.Row([dbc.Col(html.H4("Add Record"))]),
                 # Alerts for success and error messages
                 dbc.Row(
@@ -373,7 +374,7 @@ def set_dropdown_options(selected_country, selected_state, selected_category):
         if selected_category:
             query = query.filter(Order.category == selected_category)
 
-        orders = query.all()
+        orders = query.order_by(Order.id.desc()).all()
         df = pd.DataFrame([o.__dict__ for o in orders])
 
         country_options = [
@@ -442,7 +443,7 @@ def update_table_data(
         if sub_category_v:
             query = query.filter(Order.sub_category == sub_category_v)
 
-        orders = query.all()
+        orders = query.order_by(Order.id.desc()).all()
         results = order_to_dict(orders)
 
         return results, page_size
