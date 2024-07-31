@@ -38,7 +38,7 @@ app.layout = html.Div(
         dbc.Navbar(
             dbc.Container(
                 [
-                    dbc.NavbarBrand("Superstore Dashboard", href="/"),
+                    dbc.NavbarBrand(html.B("Superstore Dashboard"), href="/"),
                     dbc.NavbarToggler(id="navbar-toggler"),
                     dbc.Collapse(
                         dbc.Nav(
